@@ -2,7 +2,7 @@ import React from "react";
 
 const Register = () => {
     return (
-        <div className="w-full flex flex-col justify-center items-center h-dvh">
+        <div className="w-full h-[90dvh] flex flex-col justify-center items-center">
             <h2 className="text-2xl font-semibold text-gray-900 mb-8">Зарегистрироваться в СУПЕР ДУПЕР ЗАМЕТКАХ</h2>
             <div className="block">
                 <p>Логин</p>

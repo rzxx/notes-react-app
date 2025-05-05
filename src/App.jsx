@@ -1,9 +1,11 @@
 import { Outlet } from 'react-router'
 import Navbar from './components/Navbar'
+import GradientBackground from './components/GradientBackground'
 
 function App() {
   return (
-    <div className="bg-white px-32 font-rubik">
+    <div>
+      <GradientBackground/>
       <Navbar />
       <div className="px-8">
         <Outlet />
