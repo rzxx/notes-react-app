@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function GradientBackground() {
+const GradientBackground = () => {
     return(<>
         <div className="fixed w-full h-full -z-100">
             <span
@@ -20,7 +20,7 @@ export default function GradientBackground() {
                             <stop offset="100%" stopColor="#a21caf" />
                         </linearGradient>
                     </defs>
-                    <rect className="w-full h-full saturate-200" fill="url(#gradient)" />
+                    <rect className="w-full h-full saturate-150" fill="url(#gradient)" />
                     <rect className="w-full h-full fill-stone-50/69 backdrop-blur-3xl"/>
                     <rect className="w-full h-full opacity-30" filter="url(#noiseFilter)" />
                 </svg>
@@ -29,4 +29,4 @@ export default function GradientBackground() {
     </>)
 };
 
-
+export default GradientBackground;

@@ -4,13 +4,11 @@ import GradientBackground from './components/GradientBackground'
 
 function App() {
   return (
-    <div>
+    <>
       <GradientBackground/>
       <Navbar />
-      <div className="px-8">
-        <Outlet />
-      </div>
-    </div>
+      <Outlet />
+    </>
   )
 }
 

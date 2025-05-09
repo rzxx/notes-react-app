@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
 
-export default function ButtonLink({to, text}) {
+const ButtonLink = ({to, text}) => {
     return (
         <Link className="relative bg-linear-to-t from-black/5 to-white/5 bg-stone-50
         transition duration-75 hover:bg-rose-400 text-stone-700 hover:text-stone-50 active:text-stone-200 active:scale-95
@@ -25,3 +25,5 @@ export default function ButtonLink({to, text}) {
         </Link>
     )
 };
+
+export default ButtonLink;
