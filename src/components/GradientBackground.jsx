@@ -1,7 +1,7 @@
 import React from 'react';
 
 const GradientBackground = () => {
-    return(<>
+    return (<>
         <div className="fixed w-full h-full -z-100">
             <span
                 className="pointer-events-none inset-0"
@@ -21,7 +21,7 @@ const GradientBackground = () => {
                         </linearGradient>
                     </defs>
                     <rect className="w-full h-full saturate-150" fill="url(#gradient)" />
-                    <rect className="w-full h-full fill-stone-50/69 backdrop-blur-3xl"/>
+                    <rect className="w-full h-full fill-stone-50/69 backdrop-blur-3xl" />
                     <rect className="w-full h-full opacity-30" filter="url(#noiseFilter)" />
                 </svg>
             </span>

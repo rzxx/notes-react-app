@@ -5,7 +5,7 @@ import GradientBackground from './components/GradientBackground'
 function App() {
   return (
     <>
-      <GradientBackground/>
+      <GradientBackground />
       <Navbar />
       <Outlet />
     </>

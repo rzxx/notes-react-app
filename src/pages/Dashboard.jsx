@@ -6,7 +6,7 @@ import ItemsList from "../components/ItemsList";
 const Dashboard = () => {
     return (
         <>
-            <GradientBackground/>
+            <GradientBackground />
 
             <div className="max-w-7xl grid grid-cols-3 mx-auto py-4">
                 <Link to="/" className="text-lg font-black text-stone-700/85">Grainy Notes</Link>
@@ -23,7 +23,7 @@ const Dashboard = () => {
                     <div className="flex-1 w-42 flex items-center-safe overflow-y-auto max-h-full no-scrollbar">
                         <ItemsList />
                     </div>
-                    
+
                     <div className="mb-6">
                         <p className="text-stone-500/85 text-sm">Пользователь</p>
                     </div>

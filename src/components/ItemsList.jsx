@@ -28,7 +28,7 @@ const ItemsList = () => {
     return (
         <div className="flex flex-col">
             {items.map((item) => (
-                <ItemCard key={item.title+item.path} title={item.title} path={item.path} selected={item.selected} />
+                <ItemCard key={item.title + item.path} title={item.title} path={item.path} selected={item.selected} />
             ))}
         </div>
     );
