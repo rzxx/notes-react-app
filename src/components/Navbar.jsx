@@ -10,7 +10,7 @@ const Navbar = () => {
 
             <div className="flex items-baseline gap-4 text-stone-700">
                 <Link to="/login">Войти</Link>
-                <ButtonLink to="/register" text="Создать аккаунт"/>
+                <ButtonLink to="/register" text="Создать аккаунт" />
             </div>
         </div>
     );

@@ -27,8 +27,8 @@ const ItemsList = () => {
     return (
         <div className="flex flex-col">
             {items.map((item) => (
-                <Link to={`/dashboard${item.path}`} key={item.title+item.path}>
-                    <ItemCard  title={item.title} path={item.path} selected={`/${currentPath}` === item.path} />
+                <Link to={`/dashboard${item.path}`} key={item.title + item.path}>
+                    <ItemCard title={item.title} path={item.path} selected={`/${currentPath}` === item.path} />
                 </Link>
             ))}
         </div>
