@@ -1,12 +1,17 @@
 import React from 'react';
-import { Link } from 'react-router';
 
-const ButtonLink = ({ to, text = "кнопка" }) => {
+const Button = ({ onClick, text = "кнопка", color = "rose" }) => {
+    const colorClasses = {
+        rose: "hover:bg-rose-400",
+        blue: "hover:bg-blue-400",
+        green: "hover:bg-emerald-400",
+    };
+
     return (
-        <Link className="relative bg-linear-to-t from-black/10 to-white/10 bg-stone-50
-        transition duration-75 hover:bg-rose-400 text-stone-700 hover:text-stone-50 active:text-stone-200 active:scale-95
-        shadow-button active:shadow-pressedbutton px-4 py-2 rounded-lg overflow-hidden"
-            to={to}>
+        <button className={`relative bg-linear-to-t from-black/10 to-white/10 bg-stone-50
+        transition duration-75 ${colorClasses[color] || "hover:bg-rose-400"} text-stone-700 hover:text-stone-50 active:text-stone-200 active:scale-95
+        shadow-button active:shadow-pressedbutton px-4 py-2 rounded-lg overflow-hidden cursor-pointer`}
+            onClick={onClick}>
             <span
                 className="pointer-events-none absolute inset-0 z-0 bg-blend-overlay opacity-15"
                 aria-hidden="true"
@@ -22,8 +27,8 @@ const ButtonLink = ({ to, text = "кнопка" }) => {
                 </svg>
             </span>
             <span className="z-[1]">{text}</span>
-        </Link>
+        </button>
     )
 };
 
-export default ButtonLink;
+export default Button;
