@@ -1,9 +1,12 @@
 import React from "react";
-import { Link } from "react-router";
+import { Link, useParams } from "react-router";
 import GradientBackground from "../components/GradientBackground";
 import ItemsList from "../components/ItemsList";
 
 const Dashboard = () => {
+    const params = useParams();
+    const notePath = params['*'];
+
     return (
         <>
             <GradientBackground/>
@@ -13,14 +16,14 @@ const Dashboard = () => {
 
                 <div className="flex flex-col justify-center items-center">
                     <h4 className="text-xl font-black text-transparent bg-linear-to-tr from-yellow-900/85 to-rose-900/85 bg-clip-text">Новая заметка</h4>
-                    <p className="text-sm text-stone-700/85">/home/newpage</p>
+                    <p className="text-sm text-stone-700/85">/{notePath}</p>
                 </div>
             </div>
 
             <div className="max-w-7xl mx-auto relative"
                 style={{ height: "calc(100vh - 5rem)" }}>
                 <div className="absolute h-full left-0 top-0 flex flex-col">
-                    <div className="flex-1 w-42 flex items-center-safe overflow-y-auto max-h-full no-scrollbar">
+                    <div className="flex-1 min-w-42 flex items-center-safe overflow-y-auto max-h-full no-scrollbar">
                         <ItemsList />
                     </div>
                     

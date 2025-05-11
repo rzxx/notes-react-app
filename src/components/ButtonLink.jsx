@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 
 const ButtonLink = ({to, text}) => {
     return (
-        <Link className="relative bg-linear-to-t from-black/5 to-white/5 bg-stone-50
+        <Link className="relative bg-linear-to-t from-black/10 to-white/10 bg-stone-50
         transition duration-75 hover:bg-rose-400 text-stone-700 hover:text-stone-50 active:text-stone-200 active:scale-95
         shadow-button active:shadow-pressedbutton px-4 py-2 rounded-lg overflow-hidden"
         to={to}>

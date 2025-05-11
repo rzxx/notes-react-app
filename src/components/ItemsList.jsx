@@ -1,34 +1,35 @@
 import React, { useState } from "react";
+import { Link, useParams } from "react-router";
 import ItemCard from "./ItemCard";
 
 const ItemsList = () => {
+    const params = useParams();
+    const currentPath = params['*'];
     const [items,] = useState([
         {
-            title: "title",
+            title: "Домашняя заметка",
             path: "/home",
-            selected: false,
         },
         {
-            title: "title",
-            path: "/home",
-            selected: true,
+            title: "Идеи",
+            path: "/ideas",
         },
         {
-            title: "title",
-            path: "/home",
-            selected: false,
+            title: "Работа",
+            path: "/work",
         },
         {
-            title: "title",
-            path: "/home",
-            selected: false,
+            title: "Архив",
+            path: "/archive",
         },
     ])
 
     return (
         <div className="flex flex-col">
             {items.map((item) => (
-                <ItemCard key={item.title+item.path} title={item.title} path={item.path} selected={item.selected} />
+                <Link to={`/dashboard${item.path}`} key={item.title+item.path}>
+                    <ItemCard  title={item.title} path={item.path} selected={`/${currentPath}` === item.path} />
+                </Link>
             ))}
         </div>
     );
