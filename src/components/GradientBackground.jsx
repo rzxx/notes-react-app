@@ -15,9 +15,9 @@ const GradientBackground = () => {
                 >
                     <defs>
                         <linearGradient id="gradient" x1="1" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#a21caf" />
-                            <stop offset="50%" stopColor="#f59e42" />
-                            <stop offset="100%" stopColor="#a21caf" />
+                            <stop offset="0%" stopColor="#7e22ce" />
+                            <stop offset="50%" stopColor="#ffcc2d" />
+                            <stop offset="100%" stopColor="#7e22ce" />
                         </linearGradient>
                     </defs>
                     <rect className="w-full h-full saturate-150" fill="url(#gradient)" />

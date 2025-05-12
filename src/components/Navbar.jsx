@@ -5,7 +5,7 @@ import ButtonLink from './ButtonLink';
 const Navbar = () => {
 
     return (
-        <div className="max-w-7xl flex justify-between items-center mx-auto py-4">
+        <div className="w-dvw px-14 flex justify-between items-center py-4">
             <Link to="/" className="text-xl font-black text-transparent bg-linear-to-tr from-yellow-900 to-rose-900 bg-clip-text">Grainy Notes</Link>
 
             <div className="flex items-baseline gap-4 text-stone-700">
