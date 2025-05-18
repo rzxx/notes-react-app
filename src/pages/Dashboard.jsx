@@ -384,7 +384,7 @@ const Dashboard = () => {
 								progress_activity
 							</span>}
 					</div>
-					<div className="mx-auto w-full flex-1 text-stone-700 overflow-y-auto 2xl:px-36 md:px-8 px-4">
+					<div className="mx-auto w-full flex-1 text-stone-700 overflow-y-auto 2xl:px-36 md:px-8 xl:px-24 px-4">
 						{/* text editor */}
 						<div className="flex justify-center">
 							{error && <>
