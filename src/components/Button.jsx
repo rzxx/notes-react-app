@@ -9,7 +9,7 @@ const Button = ({ onClick, text = "кнопка", color = "rose" }) => {
 
     return (
         <button className={`relative bg-linear-to-t from-black/10 to-white/10 bg-stone-50
-        transition duration-75 ${colorClasses[color] || "hover:bg-rose-400"} text-stone-700 hover:text-stone-50 active:text-stone-200 active:scale-95
+        transition duration-75 ${colorClasses[color] || "hover:bg-rose-400"} text-stone-700 hover:text-stone-50 active:text-stone-200 active:scale-95 text-center
         shadow-button active:shadow-pressedbutton px-4 py-2 rounded-lg overflow-hidden cursor-pointer`}
             onClick={onClick}>
             <span

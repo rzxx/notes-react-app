@@ -5,7 +5,7 @@ const ButtonLink = ({ to, text = "кнопка" }) => {
     return (
         <Link className="relative bg-linear-to-t from-black/10 to-white/10 bg-stone-50
         transition duration-75 hover:bg-rose-400 text-stone-700 hover:text-stone-50 active:text-stone-200 active:scale-95
-        shadow-button active:shadow-pressedbutton px-4 py-2 rounded-lg overflow-hidden"
+        shadow-button active:shadow-pressedbutton px-4 py-2 rounded-lg overflow-hidden text-center"
             to={to}>
             <span
                 className="pointer-events-none absolute inset-0 z-0 bg-blend-overlay opacity-15"

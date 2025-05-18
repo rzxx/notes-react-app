@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import Button from '../components/Button';
+import InputField from '../components/InputField';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -40,23 +41,19 @@ const Login = () => {
 
     return (
         <div className="w-full h-[90dvh] flex flex-col justify-center items-center">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-8">Войти в СУПЕР ДУПЕР ЗАМЕТКИ</h2>
-            <div className="block">
-                <p>Логин</p>
-                <input type="text" className="border border-gray-300 rounded-xl px-4 py-2 mt-2 mb-4" placeholder="Введите ваш логин"
-                    value={username}
-                    onChange={e => setUsername(e.target.value)}
-                    required />
+            <h2 className="text-2xl font-semibold text-stone-700/85 mb-8">Вход в Grainy Notes</h2>
+            <div className="block my-2">
+                <label className="text-stone-700/85">Логин
+                    <InputField type="text" value={username} onChange={e => setUsername(e.target.value)} required={true} placeholder="Введите ваш логин" />
+                </label>
             </div>
-            <div className="block">
-                <p>Пароль</p>
-                <input type="password" className="border border-gray-300 rounded-xl px-4 py-2 mt-2 mb-4" placeholder="Введите ваш пароль"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required />
+            <div className="block mt-2 mb-8">
+                <label className="text-stone-700/85">Пароль
+                    <InputField type="password" value={password} onChange={e => setPassword(e.target.value)} required={true} placeholder="Введите ваш пароль" />
+                </label>
             </div>
             <Button onClick={handleSubmit} color="green" text="Войти" />
-            {error && <div style={{ color: 'red' }}>{error}</div>}
+            {error && <p className="text-rose-700 mt-4">{error}</p>}
         </div>
     );
 };
