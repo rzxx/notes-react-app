@@ -9,7 +9,7 @@ const Dashboard = () => {
 	const params = useParams();
 	const notePath = params['*'];
 	const navigate = useNavigate();
-	const [username, setUsername] = useState(() => localStorage.getItem('username') || 'Пользователь');
+	const [username] = useState(() => localStorage.getItem('username') || 'Пользователь');
 
 	const [currentNote, setCurrentNote] = useState(null);
 	const [allNotes, setAllNotes] = useState([]);
