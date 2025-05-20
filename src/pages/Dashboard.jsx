@@ -38,6 +38,10 @@ const Dashboard = () => {
 			});
 			if (!response.ok) {
 				const errData = await response.json();
+				if (response.status === 401) {
+					localStorage.removeItem('token');
+					navigate("/login");
+				}
 				throw new Error(errData.error || `Failed to fetch all notes: ${response.status}`);
 			}
 			const data = await response.json();
@@ -74,7 +78,11 @@ const Dashboard = () => {
 				if (response.status === 404) {
 					setCurrentNote(null); // Note not found
 					setError(`Note with path '${apiPath}' not found.`);
-				} else {
+				} else if (response.status === 401) {
+					localStorage.removeItem('token');
+					navigate("/login");
+				}
+				else {
 					const errData = await response.json();
 					throw new Error(errData.error || `Failed to fetch note: ${response.status}`);
 				}
@@ -85,6 +93,7 @@ const Dashboard = () => {
 		} catch (err) {
 			console.error("Fetch note error:", err);
 			setError(err.message);
+			/* if () navigate('/login'); */
 			setCurrentNote(null);
 		} finally {
 			setIsLoading(false);
@@ -151,6 +160,10 @@ const Dashboard = () => {
 			});
 			if (!response.ok) {
 				const errData = await response.json();
+				if (response.status === 401) {
+					localStorage.removeItem('token');
+					navigate("/login");
+				}
 				throw new Error(errData.error || `Failed to create note: ${response.status}`);
 			}
 			const newNote = await response.json();
@@ -186,6 +199,10 @@ const Dashboard = () => {
 			});
 			if (!response.ok) {
 				const errData = await response.json();
+				if (response.status === 401) {
+					localStorage.removeItem('token');
+					navigate("/login");
+				}
 				throw new Error(errData.error || `Failed to update note: ${response.status}`);
 			}
 			const updatedNote = await response.json();
@@ -235,6 +252,10 @@ const Dashboard = () => {
 
 			if (!response.ok) {
 				const errData = await response.json();
+				if (response.status === 401) {
+					localStorage.removeItem('token');
+					navigate("/login");
+				}
 				throw new Error(errData.error || `Failed to delete note: ${response.status}`);
 			}
 
