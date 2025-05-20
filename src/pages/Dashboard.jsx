@@ -9,6 +9,7 @@ const Dashboard = () => {
 	const params = useParams();
 	const notePath = params['*'];
 	const navigate = useNavigate();
+	const [username, setUsername] = useState(() => localStorage.getItem('username') || 'Пользователь');
 
 	const [currentNote, setCurrentNote] = useState(null);
 	const [allNotes, setAllNotes] = useState([]);
@@ -295,7 +296,7 @@ const Dashboard = () => {
 						<Link to="/" className="shrink-0 text-lg font-black text-stone-700/85 my-4">Grainy Notes</Link>
 
 						<div className="shrink-0 w-full flex items-start justify-between mb-4">
-							<p className="text-stone-500/85 text-sm">Пользователь</p>
+							<p className="text-stone-500/85 text-sm">{username}</p>
 							<div className="flex gap-4">
 								<Link to="/profile" className="">
 									<span className="material-symbols-outlined text-stone-700/85 hover:text-stone-700 transition-colors duration-150">
@@ -324,7 +325,7 @@ const Dashboard = () => {
 					</div>
 
 					<div className="mb-6">
-						<p className="text-stone-500/85 text-sm mb-1">Пользователь</p>
+						<p className="text-stone-500/85 text-sm mb-1">{username}</p>
 						<Link to="/profile" className="mr-2">
 							<span className="material-symbols-outlined text-stone-700/85 hover:text-stone-700 transition-colors duration-150">
 								account_circle
