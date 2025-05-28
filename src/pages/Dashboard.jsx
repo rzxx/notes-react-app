@@ -293,6 +293,10 @@ const Dashboard = () => {
 					}
 					<p className="text-sm text-stone-700/85 cursor-default">/{notePath}</p>
 				</div>
+
+				<div className="w-56 justify-self-end">
+					<SearchField />
+				</div>
 			</div>
 			{/* mobile navbar */}
 			<div className="w-dvw xl:hidden min-h-20 max-h-dvh flex flex-col-reverse">
@@ -333,14 +337,15 @@ const Dashboard = () => {
 								</button>
 							</div>
 						</div>
+						<div className="w-full mb-4">
+							<SearchField />
+						</div>
 						<div className="flex-1 min-h-0 w-full flex items-center-safe overflow-y-auto no-scrollbar mb-2">
 							<ItemsList currentPath={notePath} items={allNotes} createNote={createNewNote} />
 						</div>
 					</>}
 				</div>
 			</div>
-
-			<SearchField />
 
 			<div className="w-dvw relative"
 				style={{ height: "calc(100vh - 5rem)" }}>
@@ -364,7 +369,7 @@ const Dashboard = () => {
 					</div>
 				</div>
 				<div className="2xl:max-w-5xl w-full xl:max-w-4xl xl:mx-auto h-full bg-stone-50/85 rounded-t-4xl shadow-box overflow-clip flex flex-col">
-					<div className={`mx-auto md:px-8 px-4 bg-stone-200 w-full overflow-hidden duration-300 transition-all ease-out relative ${isDrawerOpen ? 'max-h-full py-8 opacity-100' : 'max-h-0 py-0 opacity-0'}`}>
+					<div className={`mx-auto md:px-8 px-4 bg-stone-200/85 w-full overflow-hidden duration-300 transition-all ease-out relative ${isDrawerOpen ? 'max-h-full py-8 opacity-100' : 'max-h-0 py-0 opacity-0'}`}>
 						{/* settings drawer */}
 						{currentNote && <>
 							<div>
