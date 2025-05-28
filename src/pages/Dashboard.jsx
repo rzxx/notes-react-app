@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import GradientBackground from "../components/GradientBackground";
 import ItemsList from "../components/ItemsList";
+import SearchField from "../components/SearchField";
 
 const API_BASE_URL = 'http://127.0.0.1:3000';
 
@@ -338,6 +339,8 @@ const Dashboard = () => {
 					</>}
 				</div>
 			</div>
+
+			<SearchField />
 
 			<div className="w-dvw relative"
 				style={{ height: "calc(100vh - 5rem)" }}>
