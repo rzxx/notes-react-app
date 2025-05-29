@@ -9,12 +9,14 @@ const API_BASE_URL = 'http://127.0.0.1:3000';
 
 const Dashboard = () => {
 	const params = useParams();
-	const notePath = params['*'];
+	const notePath = params['*'] || '';
 	const navigate = useNavigate();
 	const [username] = useState(() => localStorage.getItem('username') || 'Пользователь');
 
 	const [currentNote, setCurrentNote] = useState(null);
 	const [allNotes, setAllNotes] = useState([]);
+	const [pathNotes, setPathNotes] = useState([]);
+	const [parentNotes, setParentNotes] = useState([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState(null);
 
@@ -26,12 +28,14 @@ const Dashboard = () => {
 	const [activeMenuIndex, setActiveMenuIndex] = useState(null);
 	const menuHideTimerRef = useRef(null); // To manage the timeout for hiding menu
 
+	const [parentDirForCreateContext, setParentDirForCreateContext] = useState('');
+
 	const getToken = () => localStorage.getItem('token');
 
 	const fetchAllNotes = useCallback(async () => {
 		const token = getToken();
 		if (!token) {
-			navigate("/");
+			navigate("/login");
 			return;
 		}
 
@@ -53,22 +57,22 @@ const Dashboard = () => {
 			setAllNotes(data);
 		} catch (err) {
 			console.error("Fetch all notes error:", err);
-			// setError(err.message); // Or a specific error state for the list
 		}
 	}, [navigate]);
 
 	const fetchNoteByPath = useCallback(async (path) => {
 		setisDrawerOpen(false);
 		setError(null);
-		if (!path && path !== '') { // Allow empty string for root path "/"
-			setCurrentNote(null); // No specific note to fetch if path is truly undefined
+		if (path === '' && !currentNote?.path?.startsWith('/')) { // Special handling for navigating to "root view"
+			setCurrentNote(null); // No specific note for root, unless you have one at path "/"
+			setIsLoading(false);
 			return;
 		}
+
 		setIsLoading(true);
-		setError(null);
 		const token = getToken();
 		if (!token) {
-			navigate("/"); // Redirect to login if no token
+			navigate("/login"); // Redirect to login if no token
 			return;
 		}
 
@@ -104,21 +108,99 @@ const Dashboard = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [navigate]);
+	}, [navigate, currentNote?.path]);
 
 	useEffect(() => {
 		fetchAllNotes(); // Fetch all notes on component mount or when user changes
 	}, [fetchAllNotes]); // Add fetchAllNotes to dependency array
 
 	useEffect(() => {
-		// Ensure notePath is defined before fetching, or handle root path explicitly
-		if (notePath !== undefined) {
-			fetchNoteByPath(notePath);
-		} else {
-			// Handle the case where notePath is undefined, maybe fetch a default note or clear currentNote
-			setCurrentNote(null); // Example: clear current note if path is undefined
-		}
+		fetchNoteByPath(notePath);
 	}, [notePath, fetchNoteByPath]);
+
+	// Effect to derive parentNotes and pathNotes
+	useEffect(() => {
+		if (!allNotes || allNotes.length === 0) {
+			setParentNotes([]);
+			setPathNotes([]);
+			setParentDirForCreateContext('');
+			return;
+		}
+
+		const currentContextNormalizedPath = notePath ? `/${notePath}` : '/';
+		const currentPathSegments = notePath.split('/').filter(Boolean); // Segments of current path
+		const currentContextDepth = currentPathSegments.length; // Depth of current path
+
+		// 1. Calculate pathNotes (direct children of the current context/notePath)
+		const expectedChildDepth = currentContextDepth + 1;
+		const childPathPrefix = currentContextNormalizedPath === '/' ? '/' : `${currentContextNormalizedPath}/`;
+
+		const newPathNotes = allNotes.filter(note => {
+			const noteSegments = note.path.split('/').filter(Boolean);
+			// Ensure note.path starts with a slash if we expect it from allNotes
+			// Assuming note.path in allNotes is like "/foo" or "/foo/bar"
+			return noteSegments.length === expectedChildDepth && note.path.startsWith(childPathPrefix);
+		});
+		setPathNotes(newPathNotes);
+
+		// 2. Calculate parentNotes (siblings of the PARENT of the current note/context)
+		let newParentNotesResult = [];
+		let parentDirContextForCreation = ''; // Path for "Create Note" in parentNotes list
+
+		if (currentContextDepth === 0) {
+			// At root ('/'). No "grandparent" directory context. ParentNotes is empty.
+			newParentNotesResult = [];
+			// 'Create Note' in an empty parent list doesn't make sense for "up one level"
+			// but if you had a static "Create in root" button, parentDirContextForCreation would be ''
+			parentDirContextForCreation = ''; // Or perhaps null/undefined to hide create button
+		} else if (currentContextDepth === 1) {
+			// Current is one level deep (e.g., '/foo').
+			// parentNotes should be items in the root directory ('/').
+			// These items are at depth 1.
+			const targetItemDepthInParentList = 1;
+			// Their path prefix is '/' (root).
+			const targetItemPrefixInParentList = '/';
+
+			newParentNotesResult = allNotes.filter(note => {
+				const noteSegments = note.path.split('/').filter(Boolean);
+				return noteSegments.length === targetItemDepthInParentList &&
+					note.path.startsWith(targetItemPrefixInParentList);
+			});
+			// 'Create Note' in this parentNotes list (showing root items) should create a new note in the root.
+			parentDirContextForCreation = '';
+		} else { // currentContextDepth >= 2
+			// Current is two or more levels deep (e.g., '/foo/bar' or '/foo/bar/baz').
+			// The current note/context is `currentPathSegments[currentContextDepth - 1]`.
+			// Its parent directory's segments are `currentPathSegments.slice(0, -1)`.
+			// We want to list items from the "grandparent" directory.
+			// Segments of the "grandparent" directory:
+			const grandparentDirSegments = currentPathSegments.slice(0, -2); // e.g., if current is /foo/bar/note, grandparent is /foo
+			// e.g., if current is /foo/note, grandparent is / (empty segments)
+			const grandparentDirDepth = grandparentDirSegments.length;
+
+			// Notes to display in parentNotes are children of this "grandparent" directory.
+			// Their depth will be grandparentDirDepth + 1.
+			const targetItemDepthInParentList = grandparentDirDepth + 1;
+
+			// Their path prefix will be based on grandparentDirSegments.
+			const targetItemPrefixInParentList = grandparentDirSegments.length > 0
+				? `/${grandparentDirSegments.join('/')}/` // e.g., If grandparent is '/foo', prefix is '/foo/'
+				: '/';                                   // e.g., If grandparent is root, prefix is '/'
+
+			newParentNotesResult = allNotes.filter(note => {
+				const noteSegments = note.path.split('/').filter(Boolean);
+				return noteSegments.length === targetItemDepthInParentList &&
+					note.path.startsWith(targetItemPrefixInParentList);
+			});
+
+			// 'Create Note' in parentNotes should create a new note inside that "grandparent" directory.
+			parentDirContextForCreation = grandparentDirSegments.join('/'); // e.g., 'foo' or '' for root
+		}
+
+		setParentNotes(newParentNotesResult);
+		setParentDirForCreateContext(parentDirContextForCreation);
+
+	}, [allNotes, notePath]);
 
 	const handleLogout = () => {
 		localStorage.removeItem('token');
@@ -126,31 +208,37 @@ const Dashboard = () => {
 		navigate("/");
 	};
 
-	const createNewNote = async () => { // Removed noteData from parameters
+	const createNewNote = useCallback(async (parentPathSegment = '') => {
 		setIsLoading(true);
 		setError(null);
 		const token = getToken();
 		if (!token) {
-			navigate("/");
+			navigate("/login");
 			return null;
 		}
 		try {
-			const baseTitle = "Новая заметка"; // Default title
-			const basePath = "new-note"; // Base for path generation
+			const baseTitle = "Новая заметка";
+			const baseNameForPath = "new-note"; // "new-note"
+			// parentPathSegment is like '', 'foo', 'foo/bar'
+			const pathPrefix = parentPathSegment ? `/${parentPathSegment}` : ''; // e.g., "/foo" or ""
 
-			// Filter notes to find existing paths like "/new-note", "/new-note-2", etc.
-			const existingNotesWithBasePath = allNotes.filter(
-				n => n.path === `/${basePath}` || n.path.startsWith(`/${basePath}-`)
-			);
+			let finalPath;
 
-			// Find next available path
-			let nextPath = `/${basePath}`;
-			if (existingNotesWithBasePath.some(n => n.path === nextPath)) {
+			// Try base name first (e.g., /foo/new-note or /new-note)
+			let potentialPath = `${pathPrefix}/${baseNameForPath}`;
+			if (!allNotes.some(n => n.path === potentialPath)) {
+				finalPath = potentialPath;
+			} else {
+				// If base name is taken, try with suffix -2, -3, ...
 				let i = 2;
-				while (existingNotesWithBasePath.some(n => n.path === `/${basePath}-${i}`)) {
+				while (true) {
+					potentialPath = `${pathPrefix}/${baseNameForPath}-${i}`;
+					if (!allNotes.some(n => n.path === potentialPath)) {
+						finalPath = potentialPath;
+						break;
+					}
 					i++;
 				}
-				nextPath = `/${basePath}-${i}`;
 			}
 
 			const response = await fetch(`${API_BASE_URL}/api/notes`, {
@@ -160,9 +248,9 @@ const Dashboard = () => {
 					'Authorization': `Bearer ${token}`
 				},
 				body: JSON.stringify({
-					title: baseTitle, // Use the default title
-					path: nextPath,
-					blocks: [] // Initialize with empty blocks
+					title: baseTitle,
+					path: finalPath, // Use the unique finalPath
+					blocks: []
 				})
 			});
 			if (!response.ok) {
@@ -173,10 +261,10 @@ const Dashboard = () => {
 				}
 				throw new Error(errData.error || `Failed to create note: ${response.status}`);
 			}
-			const newNote = await response.json();
-			fetchAllNotes(); // Refresh the list of all notes
-			navigate(`/dashboard${newNote.path}`); // Navigate to the newly created note
-			return newNote;
+			const newNoteData = await response.json();
+			await fetchAllNotes(); // Refresh all notes, which will trigger parent/path notes update
+			navigate(`/dashboard${newNoteData.path}`);
+			return newNoteData;
 		} catch (err) {
 			console.error("Create note error:", err);
 			setError(err.message);
@@ -184,13 +272,13 @@ const Dashboard = () => {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [navigate, allNotes, fetchAllNotes]); // Added allNotes and fetchAllNotes to dependencies
 
 	const updateExistingNote = async (path, updateData) => {
 		setError(null);
 		const token = getToken();
 		if (!token) {
-			navigate("/");
+			navigate("/login");
 			return null;
 		}
 		try {
@@ -212,13 +300,16 @@ const Dashboard = () => {
 				throw new Error(errData.error || `Failed to update note: ${response.status}`);
 			}
 			const updatedNote = await response.json();
-			// Only update currentNote if it's the one being edited, 
+			// Only update currentNote if it's the one being edited,
 			// or if path hasn't changed. This is important for block reordering.
 			if (currentNote && currentNote.path === apiPath) {
-				// If only blocks are updated, we might already have the optimistic update
-				// setCurrentNote(updatedNote); // Full update from server
+				if (updateData.blocks === undefined) { // If not just blocks (e.g. title, path)
+					setCurrentNote(updatedNote); // Update from server response
+				}
 			}
-			fetchAllNotes(); // Refresh all notes list (e.g., if title changed for list)
+			if (updateData.path || updateData.title) {
+				await fetchAllNotes(); // Refresh all notes list
+			}
 
 			if (updateData.path && updateData.path !== apiPath) {
 				navigate(`/dashboard${updateData.path}`);
@@ -227,6 +318,9 @@ const Dashboard = () => {
 		} catch (err) {
 			console.error("Update note error:", err);
 			setError(err.message);
+			if (currentNote && currentNote.path === path) {
+				fetchNoteByPath(path); // Re-fetch the note to ensure consistency
+			}
 			return null;
 		}
 	};
@@ -270,14 +364,22 @@ const Dashboard = () => {
 
 			// Success
 			setisDrawerOpen(false); // Close drawer
+			const deletedPath = currentNote.path;
 			setCurrentNote(null); // Clear current note
-			const nextNoteToShow = allNotes.find(n => n.path !== apiPath) || (allNotes.length > 1 ? allNotes[0] : null);
-			if (nextNoteToShow) {
-				navigate(`/dashboard${nextNoteToShow.path}`);
+			const parentSegments = deletedPath.split('/').filter(Boolean).slice(0, -1);
+			const parentDir = parentSegments.length > 0 ? `/${parentSegments.join('/')}` : '/';
+
+			await fetchAllNotes(); // Fetch fresh list BEFORE deciding where to navigate
+
+			// After fetchAllNotes, allNotes state is updated.
+			// We need to use a local copy or wait for the next render cycle if we depend on derived `parentNotes` for navigation.
+			// Simpler: navigate to parent directory or root.
+
+			if (parentDir !== '/' && parentDir.length > 0) {
+				navigate(`/dashboard${parentDir}`);
 			} else {
-				navigate('/dashboard'); // Or a default path
+				navigate('/dashboard');
 			}
-			fetchAllNotes();
 		} catch (err) {
 			console.error("Delete note error:", err);
 			setError(err.message);
@@ -475,7 +577,7 @@ const Dashboard = () => {
 							<SearchField />
 						</div>
 						<div className="flex-1 min-h-0 w-full flex items-center-safe overflow-y-auto no-scrollbar mb-2">
-							<ItemsList currentPath={notePath} items={allNotes} createNote={createNewNote} />
+							<ItemsList currentPath={notePath} items={allNotes} createNote={() => createNewNote(notePath)} />
 						</div>
 					</>}
 				</div>
@@ -485,7 +587,7 @@ const Dashboard = () => {
 				style={{ height: "calc(100vh - 5rem)" }}>
 				<div className="absolute px-14 h-full left-0 top-0 xl:flex flex-col gap-2 hidden">
 					<div className="flex-1 min-w-42 flex items-center-safe overflow-y-auto max-h-full no-scrollbar">
-						<ItemsList currentPath={notePath} items={allNotes} createNote={createNewNote} />
+						<ItemsList currentPath={notePath} items={parentNotes} createNote={() => createNewNote(parentDirForCreateContext)} />
 					</div>
 
 					<div className="mb-6">
@@ -500,6 +602,11 @@ const Dashboard = () => {
 								logout
 							</span>
 						</button>
+					</div>
+				</div>
+				<div className="absolute px-14 h-full right-0 top-0 xl:flex flex-col gap-2 hidden">
+					<div className="flex-1 min-w-42 flex items-center-safe overflow-y-auto max-h-full no-scrollbar">
+						<ItemsList currentPath={notePath} items={pathNotes} createNote={() => createNewNote(notePath)} />
 					</div>
 				</div>
 				<div className="2xl:max-w-5xl w-full xl:max-w-4xl xl:mx-auto h-full bg-stone-50/85 rounded-t-4xl shadow-box overflow-clip flex flex-col">
