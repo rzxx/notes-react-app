@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import GradientBackground from "../components/GradientBackground";
 import ItemsList from "../components/ItemsList";
 import SearchField from "../components/SearchField";
+import BlockMenu from "../components/BlockMenu";
 
 const API_BASE_URL = 'http://127.0.0.1:3000';
 
@@ -21,6 +22,9 @@ const Dashboard = () => {
 
 	const [isDrawerOpen, setisDrawerOpen] = useState(false);
 	const [isMobileMenuOpen, setisMobileMenuOpen] = useState(false);
+
+	const [activeMenuIndex, setActiveMenuIndex] = useState(null);
+	const menuHideTimerRef = useRef(null); // To manage the timeout for hiding menu
 
 	const getToken = () => localStorage.getItem('token');
 
@@ -55,6 +59,7 @@ const Dashboard = () => {
 
 	const fetchNoteByPath = useCallback(async (path) => {
 		setisDrawerOpen(false);
+		setError(null);
 		if (!path && path !== '') { // Allow empty string for root path "/"
 			setCurrentNote(null); // No specific note to fetch if path is truly undefined
 			return;
@@ -182,7 +187,6 @@ const Dashboard = () => {
 	};
 
 	const updateExistingNote = async (path, updateData) => {
-		setIsLoading(true);
 		setError(null);
 		const token = getToken();
 		if (!token) {
@@ -208,9 +212,14 @@ const Dashboard = () => {
 				throw new Error(errData.error || `Failed to update note: ${response.status}`);
 			}
 			const updatedNote = await response.json();
-			setCurrentNote(updatedNote); // Update current note state
-			fetchAllNotes();
-			// Optionally, refresh notes list if path was changed
+			// Only update currentNote if it's the one being edited, 
+			// or if path hasn't changed. This is important for block reordering.
+			if (currentNote && currentNote.path === apiPath) {
+				// If only blocks are updated, we might already have the optimistic update
+				// setCurrentNote(updatedNote); // Full update from server
+			}
+			fetchAllNotes(); // Refresh all notes list (e.g., if title changed for list)
+
 			if (updateData.path && updateData.path !== apiPath) {
 				navigate(`/dashboard${updateData.path}`);
 			}
@@ -219,8 +228,6 @@ const Dashboard = () => {
 			console.error("Update note error:", err);
 			setError(err.message);
 			return null;
-		} finally {
-			setIsLoading(false);
 		}
 	};
 
@@ -264,9 +271,13 @@ const Dashboard = () => {
 			// Success
 			setisDrawerOpen(false); // Close drawer
 			setCurrentNote(null); // Clear current note
-			navigate(`/dashboard${allNotes[1].path}`); // Navigate to a default/home path
-			fetchAllNotes(); // Refresh the list of all notes
-			// Optionally, show a success message
+			const nextNoteToShow = allNotes.find(n => n.path !== apiPath) || (allNotes.length > 1 ? allNotes[0] : null);
+			if (nextNoteToShow) {
+				navigate(`/dashboard${nextNoteToShow.path}`);
+			} else {
+				navigate('/dashboard'); // Or a default path
+			}
+			fetchAllNotes();
 		} catch (err) {
 			console.error("Delete note error:", err);
 			setError(err.message);
@@ -274,6 +285,129 @@ const Dashboard = () => {
 			setIsLoading(false);
 		}
 	};
+
+	const handleMoveBlock = async (index, direction) => {
+		if (!currentNote || !currentNote.blocks) return;
+
+		const currentBlocks = currentNote.blocks;
+		const newBlocks = [...currentBlocks]; // Create a new array
+
+		if (direction === 'up') {
+			if (index === 0) return; // Already at the top
+			// Swap element at index with element at index - 1
+			[newBlocks[index], newBlocks[index - 1]] = [newBlocks[index - 1], newBlocks[index]];
+		} else if (direction === 'down') {
+			if (index === currentBlocks.length - 1) return; // Already at the bottom
+			// Swap element at index with element at index + 1
+			[newBlocks[index], newBlocks[index + 1]] = [newBlocks[index + 1], newBlocks[index]];
+		} else {
+			return; // Invalid direction
+		}
+
+		// Optimistic UI update
+		setCurrentNote(prev => ({
+			...prev,
+			blocks: newBlocks
+		}));
+
+		// Persist change to the backend
+		try {
+			await updateExistingNote(currentNote.path, { blocks: newBlocks });
+		} catch (error) {
+			console.error("Failed to move block:", error);
+			// Revert optimistic update by fetching the note again if saving failed
+			fetchNoteByPath(currentNote.path);
+			// You might want to show an error message to the user here
+		}
+	};
+
+	const handleAddBlockAfter = async (index, blockType) => {
+		if (!currentNote || !currentNote.blocks) return;
+		const originalBlocks = currentNote.blocks || [];
+		let newBlockData;
+
+		switch (blockType) {
+			case 'heading_one':
+				newBlockData = { type: 'heading_one', content: "Заголовок" };
+				break;
+			case 'divider':
+				newBlockData = { type: 'divider', content: null }; // No content for divider
+				break;
+			case 'paragraph':
+			default:
+				newBlockData = { type: 'paragraph', content: "" };
+				break;
+		}
+
+		const newBlocksList = [...originalBlocks];
+		newBlocksList.splice(index + 1, 0, newBlockData);
+
+		setCurrentNote(prev => ({
+			...prev,
+			blocks: newBlocksList
+		}));
+
+		try {
+			await updateExistingNote(currentNote.path, { blocks: newBlocksList });
+		} catch (error) {
+			console.error("Failed to add block:", error);
+			setCurrentNote(prev => ({
+				...prev,
+				blocks: originalBlocks // Revert
+			}));
+			setError("Не удалось добавить блок.");
+		}
+	};
+
+	const handleDeleteBlock = async (indexToDelete) => {
+		if (!currentNote || !currentNote.blocks) return;
+
+		const originalBlocks = currentNote.blocks;
+		const newBlocks = originalBlocks.filter((_, index) => index !== indexToDelete);
+
+		// Optimistic UI update
+		setCurrentNote(prev => ({
+			...prev,
+			blocks: newBlocks
+		}));
+
+		// Adjust activeMenuIndex if the deleted block was active or before the active one
+		if (activeMenuIndex === indexToDelete) {
+			setActiveMenuIndex(null);
+		} else if (activeMenuIndex > indexToDelete) {
+			setActiveMenuIndex(prev => (prev ? prev - 1 : null));
+		}
+
+		try {
+			await updateExistingNote(currentNote.path, { blocks: newBlocks });
+		} catch (error) {
+			console.error("Failed to delete block:", error);
+			setCurrentNote(prev => ({ // Revert
+				...prev,
+				blocks: originalBlocks
+			}));
+			setError("Не удалось удалить блок.");
+		}
+	};
+
+	const handleBlockAreaMouseEnter = (index) => {
+		clearTimeout(menuHideTimerRef.current); // Clear any pending hide operations
+		setActiveMenuIndex(index);
+	};
+
+	const handleBlockAreaMouseLeave = () => {
+		// Set a timer to hide the menu. If the mouse re-enters the block area
+		// or enters the menu itself before the timer fires, the hide will be cancelled.
+		menuHideTimerRef.current = setTimeout(() => {
+			setActiveMenuIndex(null);
+		}, 200); // Adjust this delay (in ms) as needed for comfortable interaction
+	};
+
+	// This function will be called by BlockMenu when the mouse enters it or its items get focus
+	const handleMenuInteraction = () => {
+		clearTimeout(menuHideTimerRef.current); // Keep the menu open
+	};
+
 
 	return (
 		<>
@@ -284,7 +418,7 @@ const Dashboard = () => {
 				<Link to="/" className="text-lg font-black text-stone-700/85 hidden xl:block">Grainy Notes</Link>
 
 				<div className={`flex flex-col justify-center items-center text-center transition-opacity duration-300 ease-out ${isDrawerOpen && 'opacity-0'}`}>
-					{isLoading
+					{isLoading && !currentNote
 						? <h4 className="text-xl font-black text-stone-500 opacity-85 animate-pulse">Загрузка...</h4>
 						: (currentNote
 							? <h4 className="text-xl font-black text-transparent bg-linear-to-tr from-yellow-900/85 to-rose-900/85 bg-clip-text cursor-default">{currentNote.title.trim()
@@ -418,7 +552,7 @@ const Dashboard = () => {
 					<div className="mx-auto w-full flex-1 text-stone-700 overflow-y-auto 2xl:px-36 md:px-8 xl:px-24 px-4">
 						{/* text editor */}
 						<div className="flex justify-center">
-							{error && <>
+							{(error && notePath) && <>
 								<span className="material-symbols-outlined text-rose-700 mr-2">
 									error
 								</span>
@@ -427,17 +561,68 @@ const Dashboard = () => {
 						</div>
 						{!isLoading && !error && currentNote && (
 							<div>
-								{/* Для новых элементов надо будет делать проверку */}
-								{/* {currentNote.blocks.map((block) => (
-                                    <div key={block.id} className="mb-2">
-                                        {block.type === 'heading_one' && <h1>{block.content}</h1>}
-                                        {block.type === 'paragraph' && <textarea className="w-full outline-0 focus:bg-stone-200 text-stone-700 py-1" value={block.content} />}
-                                        {block.type === 'divider' && <hr className="my-2" />}
-                                    </div>
-                                ))} */}
-								{currentNote.blocks.map((block, idx) => (
-									<div key={idx} className="mb-2">
-										{block.type === 'heading_one' && <h1>{block.content}</h1>}
+								{currentNote.blocks && currentNote.blocks.map((block, idx) => (
+									<div
+										key={block.id || `block-${idx}`}
+										className="mb-2 relative pr-2"
+										onMouseEnter={() => handleBlockAreaMouseEnter(idx)}
+										onMouseLeave={() => handleBlockAreaMouseLeave()}
+									>
+										<BlockMenu
+											isVisible={activeMenuIndex === idx}
+											onMenuInteraction={handleMenuInteraction}
+											onMoveUp={() => handleMoveBlock(idx, 'up')}
+											onMoveDown={() => handleMoveBlock(idx, 'down')}
+											// Pass the blockType to handleAddBlockAfter
+											onAddBlockAfter={(blockType) => handleAddBlockAfter(idx, blockType)}
+											// Add the onDeleteBlock handler
+											onDeleteBlock={() => handleDeleteBlock(idx)}
+											isFirst={idx === 0}
+											isLast={idx === currentNote.blocks.length - 1}
+										/>
+										{block.type === 'heading_one' && (
+											<div className="grid relative">
+												<span
+													aria-hidden="true"
+													className="pointer-events-none invisible break-all whitespace-pre-wrap py-1 col-start-1 row-start-1 font-semibold text-2xl"
+												>
+													{(block.content || "") + " "}
+												</span>
+												<textarea
+													className="w-full outline-0 focus:bg-stone-200/85 bg-transparent text-stone-700 placeholder:text-stone-400 py-1 resize-none col-start-1 row-start-1 break-all overflow-x-hidden font-semibold text-2xl"
+													value={block.content || ""}
+													rows={1}
+													placeholder="Заголовок"
+													onChange={e => {
+														const newContent = e.target.value;
+														setCurrentNote(prev => ({
+															...prev,
+															blocks: prev.blocks.map((b, i) =>
+																i === idx ? { ...b, content: newContent } : b
+															)
+														}));
+													}}
+													onBlur={async (e) => {
+														const value = e.target.value;
+														const blockExistsPredicate = (b_item, i_item) => (block.id && b_item.id === block.id) || i_item === idx;
+
+														if (!currentNote.blocks.some(blockExistsPredicate)) return;
+
+														const blocksToSend = currentNote.blocks.map((b, i) =>
+															i === idx ? { ...b, content: value } : b
+														);
+
+														// Optimistically update state with the final blurred value
+														setCurrentNote(prev => ({
+															...prev,
+															blocks: blocksToSend
+														}));
+
+														await updateExistingNote(currentNote.path, { blocks: blocksToSend });
+													}}
+												/>
+											</div>
+										)}
 										{block.type === 'paragraph' && <div
 											className="grid relative">
 											<span
@@ -447,36 +632,48 @@ const Dashboard = () => {
 												{(block.content || "") + " "}
 											</span>
 											<textarea
-												className="w-full outline-0 focus:bg-stone-200 text-stone-700 placeholder:text-stone-500 py-1 resize-none col-start-1 row-start-1 break-all overflow-x-hidden"
+												className="w-full outline-0 focus:bg-stone-200/85 text-stone-700 placeholder:text-stone-500 py-1 resize-none col-start-1 row-start-1 break-all overflow-x-hidden"
 												value={block.content}
 												rows={1}
+												placeholder="Абзац..."
 												onChange={e => {
+													const newContent = e.target.value;
 													setCurrentNote(prev => ({
 														...prev,
 														blocks: prev.blocks.map((b, i) =>
-															i === idx ? { ...b, content: e.target.value } : b
+															i === idx ? { ...b, content: newContent } : b
 														)
 													}));
 												}}
 												onBlur={async (e) => {
 													const value = e.target.value;
-													if (!value.trim()) {
-														const newBlocks = currentNote.blocks.filter((_, i) => i !== idx);
-														setCurrentNote(prev => ({
-															...prev,
-															blocks: newBlocks
-														}));
-														await updateExistingNote(currentNote.path, {
-															blocks: newBlocks
-														});
+													const blockExistsPredicate = (b_item, i_item) => (block.id && b_item.id === block.id) || i_item === idx;
+
+													if (!currentNote.blocks.some(blockExistsPredicate)) return;
+
+													if (!value.trim()) { // Delete if empty
+														const newBlocks = currentNote.blocks.filter((b, i) => !blockExistsPredicate(b, i));
+														setCurrentNote(prev => ({ ...prev, blocks: newBlocks }));
+
+														if (activeMenuIndex === idx) setActiveMenuIndex(null);
+														else if (activeMenuIndex > idx) setActiveMenuIndex(prev => prev ? prev - 1 : null);
+
+														await updateExistingNote(currentNote.path, { blocks: newBlocks });
 													} else {
-														await updateExistingNote(currentNote.path, {
-															blocks: currentNote.blocks
-														});
+														const blocksToSend = currentNote.blocks.map((b, i) =>
+															i === idx ? { ...b, content: value } : b
+														);
+														setCurrentNote(prev => ({ ...prev, blocks: blocksToSend }));
+														await updateExistingNote(currentNote.path, { blocks: blocksToSend });
 													}
 												}}
 											/>
 										</div>}
+										{block.type === 'divider' && (
+											<div className="py-3">
+												<hr className="border-stone-400/85" />
+											</div>
+										)}
 									</div>
 								))}
 								<div
@@ -488,32 +685,44 @@ const Dashboard = () => {
 										{(newParagraph || "") + " "}
 									</span>
 									<textarea
-										className="w-full outline-0 focus:bg-stone-200 text-stone-700 placeholder:text-stone-500 py-1 resize-none col-start-1 row-start-1 break-all overflow-x-hidden"
+										className="w-full outline-0 focus:bg-stone-200/85 text-stone-700 placeholder:text-stone-500 py-1 resize-none col-start-1 row-start-1 break-all overflow-x-hidden"
 										placeholder="Нажмите сюда чтобы создать новый абзац."
 										value={newParagraph}
 										rows={1}
 										onChange={e => setNewParagraph(e.target.value)}
 										onBlur={async () => {
-											if (!newParagraph.trim()) return;
-											// Создаем новый блок
+											if (!newParagraph.trim()) {
+												setNewParagraph(""); // Clear if only spaces
+												return;
+											}
 											const newBlock = {
 												type: "paragraph",
 												content: newParagraph,
-												properties: {},
+												// properties: {}, // Only if your backend expects it
 											};
-											// Обновляем заметку на сервере
+											const updatedBlocks = currentNote.blocks ? [...currentNote.blocks, newBlock] : [newBlock];
+
+											setCurrentNote(prev => ({
+												...prev,
+												blocks: updatedBlocks
+											}));
 											await updateExistingNote(currentNote.path, {
-												blocks: [...currentNote.blocks, newBlock]
+												blocks: updatedBlocks
 											});
-											// Очищаем инпут
 											setNewParagraph("");
 										}}
 									/>
 								</div>
 							</div>
 						)}
+
 						{!isLoading && !error && !currentNote && notePath && (
 							<p>Заметка не найдена или к ней нет доступа.</p>
+						)}
+						{!isLoading && error && !currentNote && (!notePath || notePath === "/") && (
+							<div className="text-center text-stone-500 mt-10">
+								<p>Выберите заметку из списка или создайте новую.</p>
+							</div>
 						)}
 					</div>
 				</div>

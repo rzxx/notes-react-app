@@ -158,7 +158,7 @@ const SearchField = () => {
                     </div>
                     <input
                         type="search"
-                        className="flex-grow py-1.5 pr-2 bg-transparent text-stone-700 placeholder:text-stone-500 focus:outline-none appearance-none w-full"
+                        className="flex-grow -mt-0.5 py-1.5 pr-2 bg-transparent text-stone-700 placeholder:text-stone-500 focus:outline-none appearance-none w-full"
                         placeholder="Поиск в заметках"
                         value={query}
                         onChange={handleInputChange}
