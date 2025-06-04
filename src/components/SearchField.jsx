@@ -14,20 +14,18 @@ const SearchField = () => {
     const searchContainerRef = useRef(null);
     const token = localStorage.getItem('token');
 
-    // Memoize the search function to avoid re-creating it on every render
-    // unless the `token` changes.
     const performSearch = useCallback(async (searchTerm) => {
         if (!token) {
             console.error("No auth token found");
             setError("Authentication token is missing. Please log in.");
-            setSearchResults([]); // Clear previous results
+            setSearchResults([]);
             return [];
         }
 
         const trimmedSearchTerm = searchTerm.trim();
         if (!trimmedSearchTerm) {
-            setSearchResults([]); // Clear results if search term is empty
-            setError(null); // Clear any previous errors
+            setSearchResults([]);
+            setError(null);
             return [];
         }
 
@@ -44,8 +42,6 @@ const SearchField = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                // If the backend returns a 400 for an empty query (as per backend code),
-                // treat it as "no results" rather than a generic error.
                 if (response.status === 400 && errorData.error?.toLowerCase().includes('query "q" is required')) {
                     setSearchResults([]);
                     return [];
@@ -58,23 +54,20 @@ const SearchField = () => {
         } catch (err) {
             console.error("Failed to search notes:", err);
             setError(err.message || "Failed to fetch search results.");
-            return []; // Return empty array on error
+            return [];
         } finally {
             setIsLoading(false);
         }
-    }, [token]); // Dependency: token
+    }, [token]);
 
-    // Effect for debounced searching
     useEffect(() => {
-        // If query is empty after trimming, clear results and don't search.
         if (query.trim() === '') {
             setSearchResults([]);
             setError(null);
-            setIsLoading(false); // Ensure loading is off
+            setIsLoading(false);
             return;
         }
 
-        // Show loading immediately for better UX while debouncing
         setIsLoading(true);
         setError(null);
         setIsPopoutVisible(true);
@@ -83,18 +76,15 @@ const SearchField = () => {
             performSearch(query).then(notes => {
                 setSearchResults(notes);
                 if (notes.length === 0 && query.trim() !== '') {
-                    // If search yields no results, ensure popout remains visible to show "no results"
                     setIsPopoutVisible(true);
                 }
             });
-        }, 500); // 500ms debounce delay
+        }, 500);
 
-        // Cleanup function to clear the timer if query changes before timeout
-        // or if the component unmounts.
         return () => {
             clearTimeout(timerId);
         };
-    }, [query, performSearch]); // Re-run effect if query or performSearch function changes
+    }, [query, performSearch]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -115,8 +105,8 @@ const SearchField = () => {
         if (newQuery.trim() !== '') {
             setIsPopoutVisible(true);
         } else {
-            setIsPopoutVisible(false); // Hide popout if query is manually cleared
-            setSearchResults([]); // Clear results as well
+            setIsPopoutVisible(false);
+            setSearchResults([]);
             setError(null);
         }
     };
@@ -124,14 +114,12 @@ const SearchField = () => {
     const handleInputFocus = () => {
         setIsFocused(true);
         if (query.trim() !== '' || isLoading || error || searchResults.length > 0) {
-            setIsPopoutVisible(true); // Show popout on focus if there's content or a query
+            setIsPopoutVisible(true);
         }
     };
 
     const handleInputBlur = () => {
         setIsFocused(false);
-        // Don't hide popout on blur immediately, handleClickOutside will handle it
-        // This allows clicking on items within the popout.
     };
 
     return (

@@ -5,8 +5,8 @@ const BlockMenu = ({
     onMenuInteraction,
     onMoveUp,
     onMoveDown,
-    onAddBlockAfter, // Now (type: string) => void
-    onDeleteBlock,   // New prop: () => void
+    onAddBlockAfter,
+    onDeleteBlock,
     isFirst,
     isLast
 }) => {
@@ -14,21 +14,17 @@ const BlockMenu = ({
     const addOptionsRef = useRef(null);
     const mainAddButtonRef = useRef(null);
 
-    // Hide add options if the main menu becomes invisible
     useEffect(() => {
         if (!isVisible) {
             setShowAddOptions(false);
         }
     }, [isVisible]);
 
-    // Click outside handler for add options sub-menu
     useEffect(() => {
         const handleClickOutside = (event) => {
-            // If click is on the main add button, let its own onClick handle toggling
             if (mainAddButtonRef.current && mainAddButtonRef.current.contains(event.target)) {
                 return;
             }
-            // If click is outside the add options panel, close it
             if (addOptionsRef.current && !addOptionsRef.current.contains(event.target)) {
                 setShowAddOptions(false);
             }
@@ -48,11 +44,10 @@ const BlockMenu = ({
 
     const handleAddOptionClick = (type) => {
         onAddBlockAfter(type);
-        setShowAddOptions(false); // Close sub-menu after selection
-        onMenuInteraction();    // Ensure menu stays active
+        setShowAddOptions(false);
+        onMenuInteraction();
     };
 
-    // Helper to call onMenuInteraction along with the action
     const createInteractiveHandler = (handler) => () => {
         if (handler) handler();
         onMenuInteraction();
@@ -98,7 +93,7 @@ const BlockMenu = ({
                     <div
                         ref={addOptionsRef}
                         className="absolute left-full top-0 ml-1 w-max flex flex-col gap-1 rounded-lg shadow-button backdrop-blur-xs bg-stone-50/85 z-20"
-                        onMouseEnter={onMenuInteraction} // Keep main menu alive
+                        onMouseEnter={onMenuInteraction}
                     >
                         <button
                             onClick={() => handleAddOptionClick('paragraph')}

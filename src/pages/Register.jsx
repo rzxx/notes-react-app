@@ -24,7 +24,7 @@ const Register = () => {
                 body: JSON.stringify({ username, password }),
             });
             const data = await res.json();
-            if (data.message === 'User created') {
+            if (data.message === 'User created successfully') {
                 setSuccess('Регистрация успешна!');
             } else if (data.error) {
                 setError(data.error);
