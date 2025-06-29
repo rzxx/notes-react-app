@@ -1,6 +1,10 @@
 # Grainy Notes – React App
 
+[Русский 👈](README_ru.md)
+
 A simple, modern note-taking app built with React and Tailwind CSS.
+
+![Demo GIF](https://github.com/user-attachments/assets/51611fc0-600a-4ca6-b77c-41902ad07fce)
 
 ## Features
 
