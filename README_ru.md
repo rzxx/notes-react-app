@@ -6,6 +6,8 @@
 
 ![Демо GIF](https://github.com/user-attachments/assets/51611fc0-600a-4ca6-b77c-41902ad07fce)
 
+Попробуй на [grainynotes.netlify.app](https://grainynotes.netlify.app/)!
+
 ## Возможности
 
 - Создание, редактирование и удаление заметок
