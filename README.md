@@ -49,8 +49,7 @@ A simple, modern note-taking app built with React and Tailwind CSS.
     yarn dev
 
     # server:
-    cd backend
-    node server.js
+    npm run backend
     ```
 
 3. Open <http://localhost:5173> in your browser.

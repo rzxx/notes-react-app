@@ -7,7 +7,7 @@
     "dev-all": "concurrently \"npm run dev\" \"npm run backend\"",
     "dev": "vite",
     "build": "vite build",
-    "backend": "cd ../backend444 && node server.js",
+    "backend": "cd backend && node server.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
