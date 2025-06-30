@@ -5,7 +5,7 @@ import ItemsList from "../components/ItemsList";
 import SearchField from "../components/SearchField";
 import BlockMenu from "../components/BlockMenu";
 
-const API_BASE_URL = 'http://127.0.0.1:3000';
+const API_BASE_URL = '';
 
 const Dashboard = () => {
 	const params = useParams();

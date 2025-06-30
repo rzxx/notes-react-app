@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router';
 
-const API_BASE_URL = 'http://127.0.0.1:3000';
+const API_BASE_URL = '';
 
 const SearchField = () => {
     const [query, setQuery] = useState('');
