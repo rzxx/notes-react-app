@@ -9,9 +9,6 @@ import dotenv from 'dotenv';
 // Ensure dotenv is loaded before using process.env
 dotenv.config();
 
-// If running in an environment where process is not defined, import it
-import process from 'process';
-
 const JWT_SECRET = process.env.JWT_SECRET || 'blugigi';
 
 const fastify = Fastify({
