@@ -6,7 +6,6 @@ import cors from '@fastify/cors';
 import awsLambdaFastify from '@fastify/aws-lambda';
 import dotenv from 'dotenv';
 
-// Ensure dotenv is loaded before using process.env
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'blugigi';
@@ -109,12 +108,10 @@ fastify.decorate("authenticate", async function (request, reply) {
   }
 });
 
-// eslint-disable-next-line no-unused-vars
 fastify.get('/', async function handler(request, reply) {
   return { hello: 'world' };
 });
 
-// eslint-disable-next-line no-unused-vars
 fastify.get('/users/count', async (request, reply) => {
   const count = await User.countDocuments();
   return { count };
